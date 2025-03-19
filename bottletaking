@@ -1,0 +1,73 @@
+void INSERT_BOTTLE()
+{
+    if (Insert == true)
+    {
+        nexLoop(nex_listen_list);
+
+        if (Page3_Display == false && Insert == true)
+        {
+            setServoAngle(Servo_Entrance, 60);
+            Serial.print("page 3");
+            Serial.write(0xff); Serial.write(0xff); Serial.write(0xff);
+            delay(20);
+            Page3_Display = true;
+        }
+
+        if (Back_Page3 == true)
+        {
+            setServoAngle(Servo_Entrance, 0);
+            Page3_Display = false;
+            Page2_Display = false;
+            Start_Display = false;
+            Insert = false;
+            Back_Page3 = false;
+        }
+
+        STORAGE_MONITORING();
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+
+
+
+void ULTRASONIC_ITEM_DETECTION()
+{
+    int VAL_INDUCTIVE = digitalRead(INDUCTIVE_SENSOR);
+
+    digitalWrite(TRIG_BOTTLE, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(TRIG_BOTTLE, LOW);
+    Detect_Duration = pulseIn(ECHO_BOTTLE, HIGH);
+
+    Distance = Detect_Duration * 0.034 / 2;
+}
+
+/////////////////////////////////////////////////////////////////////
+
+
+
+void setServoAngle(Servo servo, int angle)
+{
+    servo.write(angle);
+    delay(500);
+}
+//////////////////////////////////////////////////////////////////////
+int Detect_Material()
+{
+    int sensorValue = digitalRead(INDUCTIVE_SENSOR);
+    if (sensorValue == HIGH) return 1; // Glass detected
+    return 0; // Plastic detected
+}
+
+//////////////////////////////////////////////////////////////////////
+
+void STORAGE_MONITORING()
+{
+    if (sensorValue < THRESHOLD)
+    {
+        Serial.print("Storage Full");
+    }
+}
+

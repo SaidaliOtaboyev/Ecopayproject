@@ -1,0 +1,22 @@
+import tensorflow.lite as tflite
+import numpy as np
+
+# Load TFLite model
+interpreter = tflite.Interpreter(model_path="model.tflite")
+interpreter.allocate_tensors()
+
+# Get input & output tensor indices
+input_index = interpreter.get_input_details()[0]['index']
+output_index = interpreter.get_output_details()[0]['index']
+
+# Function to run inference
+def run_inference(input_data):
+    input_data = np.array(input_data, dtype=np.float32)  # Ensure correct data type
+    interpreter.set_tensor(input_index, input_data)
+    interpreter.invoke()
+    return interpreter.get_tensor(output_index)
+
+# Example usage
+input_data = np.random.rand(1, 224, 224, 3)  # Example input (adjust to your model)
+output_data = run_inference(input_data)
+print("Model Output:", output_data)

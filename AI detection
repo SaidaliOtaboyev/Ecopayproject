@@ -1,0 +1,44 @@
+import cv2
+from time import sleep
+from gpiozero import LED, Button
+from mediapipe.tasks import python as mp
+
+# Initialize hardware
+Accepted_Pin = LED(17)
+Rejected_Pin = LED(18)
+Detect = Button(2)
+
+# Load AI model
+model_path = "best.tflite"
+base_options = mp.core.BaseOptions(file_name=model_path)
+options = mp.vision.ObjectDetectorOptions(base_options=base_options)
+detector = mp.vision.ObjectDetector.create_from_options(options)
+
+# Function to process detection results
+def process_detection(result):
+    item = str(result.detections[0].categories[0].category_name) if result.detections else "Unknown"
+    print(f"Detected: {item}")
+
+    if Detect.is_pressed:
+        (Accepted_Pin.on() if item == "Bottle" else Rejected_Pin.on())
+        sleep(1)
+        Accepted_Pin.off()
+        Rejected_Pin.off()
+
+# Main loop to capture video and run detection
+cap = cv2.VideoCapture(0)
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    image = cv2.flip(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB), 1)
+    result = detector.detect(mp.vision.TensorImage.create_from_array(image))
+    process_detection(result)
+
+    cv2.imshow("Bottle Detector", frame)
+    if cv2.waitKey(1) == 27:  # Press ESC to exit
+        break
+
+cap.release()
+cv2.destroyAllWindows()

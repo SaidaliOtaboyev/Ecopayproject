@@ -1,0 +1,60 @@
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <WiFiClientSecure.h>
+#include <WiFiManager.h>
+
+
+void setup() {
+  Serial.begin(115200);
+  
+  WiFiManager wifiManager;
+
+  // Uncomment this line to reset saved WiFi (for testing)
+  // wifiManager.resetSettings();
+
+  // Start WiFi Manager with a custom name for the setup hotspot
+  if (!wifiManager.autoConnect("Bottle_Recycle_Setup")) {
+    Serial.println("Failed to connect. Restarting...");
+    delay(3000);
+    ESP.restart();
+  }
+
+  Serial.println("Connected to WiFi!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  // The main program runs here after connecting to WiFi
+}
+
+void sendDataToServer(String ID, int Points) {
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    HTTPClient http;
+
+    String serverPath = "http://your-server.com/update.php";
+    
+    http.begin(client, serverPath);
+    http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+    String postData = "ID=" + ID + "&Points=" + String(Points);
+    int httpResponseCode = http.POST(postData);
+
+    if (httpResponseCode > 0) {
+      Serial.println("Data sent successfully! Response: " + http.getString());
+    } else {
+      Serial.println("Error sending data. HTTP Response: " + String(httpResponseCode));
+    }
+
+    http.end();
+  } else {
+    Serial.println("WiFi not connected. Cannot send data.");
+  }
+}
+
+void loop() {
+  // Simulated data
+  sendDataToServer("USER123", 10);
+  delay(5000);
+}

@@ -63,11 +63,10 @@ int Detect_Material()
 
 //////////////////////////////////////////////////////////////////////
 
-void STORAGE_MONITORING()
-{
-    if (sensorValue < THRESHOLD)
-    {
-        Serial.print("Storage Full");
+void STORAGE_MONITORING(int sensorValue) {
+    if (sensorValue < THRESHOLD) {
+        Serial.println("Storage Full");
     }
 }
+
 

@@ -1,0 +1,94 @@
+#include <SoftwareSerial.h>
+#include <SPI.h>
+#include <MFRC522.h>
+
+// Define Nextion Serial communication
+SoftwareSerial nextion(10, 11); // RX, TX
+
+// RFID setup
+#define RST_PIN 9
+#define SS_PIN  8
+MFRC522 mfrc522(SS_PIN, RST_PIN);
+
+// Function to send commands to Nextion Display
+void sendNextionCommand(String command) {
+  nextion.print(command);
+  nextion.write(0xff); nextion.write(0xff); nextion.write(0xff);
+  delay(20);
+}
+
+// Function to display reward options
+void REDEEM_REWARDS() {
+  if (Reward) { // Check if reward is available
+    sendNextionCommand("page 10"); // Switch to reward page
+    sendNextionCommand("IDCard.txt=\"" + String(Display_User_Card) + "\"");
+    sendNextionCommand("IDBal.val=" + String(User_Points));
+    delay(100);
+
+    // Show reward options
+    sendNextionCommand("RewardOptions.txt=\"Select Reward:\\r1. Print Check \\r2. Bank Transfer (Tap Card) \\r3. QR Code\"");
+    sendNextionCommand("tReward.show"); // Show reward options text
+  }
+}
+
+// Function to generate and show QR Code
+void QRPayment() {
+  String qrData = "https://payment-system.com/pay?user=" + String(Display_User_Card) + "&amount=" + String(User_Points);
+  sendNextionCommand("QRText.txt=\"" + qrData + "\"");
+  sendNextionCommand("QRImage.pic=5"); // Assuming 5 is the QR image ID
+  sendNextionCommand("tQR.show");
+}
+
+// Function to print a check (receipt)
+void PrintCheck() {
+  sendNextionCommand("CheckMessage.txt=\"Printing Receipt...\"");
+  sendNextionCommand("tCheckMessage.show");
+  Serial.println("Printing Receipt: User " + String(Display_User_Card) + " received " + String(User_Points) + " points.");
+  // Here, send a command to the thermal printer (if connected)
+}
+
+// Function to handle bank transfer when RFID card is tapped
+void BankTransfer() {
+  sendNextionCommand("BankMessage.txt=\"Payment Sent to Card\"");
+  sendNextionCommand("tBankMessage.show");
+  Serial.println("Payment sent to bank card: " + String(Display_User_Card));
+}
+
+// Function to listen to Nextion button presses
+void listenToNextion() {
+  String message = "";
+  while (nextion.available()) {
+    char c = nextion.read();
+    message += c;
+    delay(5);
+  }
+
+  if (message.indexOf("btnQR") != -1) {
+    QRPayment();
+  } 
+  else if (message.indexOf("btnCheck") != -1) {
+    PrintCheck();
+  } 
+}
+
+// Function to detect RFID card for bank transfer
+void detectRFID() {
+  if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial()) {
+    return; // No card detected
+  }
+
+  BankTransfer();
+  delay(2000); // Prevent multiple detections
+}
+
+void setup() {
+  nextion.begin(9600);
+  SPI.begin();
+  mfrc522.PCD_Init(); // Initialize RFID module
+  Serial.begin(9600);
+}
+
+void loop() {
+  listenToNextion(); // Listen for button presses
+  detectRFID(); // Check for RFID card tap
+}

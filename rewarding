@@ -1,0 +1,53 @@
+#define BTN_SHORT 2   // Pin for SHORT button
+#define BTN_LONG 3    // Pin for LONG button
+#define BTN_BALLPEN 4 // Pin for BALLPEN button
+#define BTN_INDEX 5   // Pin for INDEX button
+
+// Default reward quantities (can be changed easily)
+#define REWARD_SHORT 10
+#define REWARD_LONG 11
+#define REWARD_BALLPEN 12
+#define REWARD_INDEX 11
+
+// Variables to store available rewards
+int Available_Short, Available_Long, Available_Ballpen, Available_Index;
+
+void RESET_REWARD() {
+  // Read button states with debounce
+  if (isButtonPressed(BTN_SHORT)) {
+    updateReward(1, REWARD_SHORT, Available_Short, "SHORT");
+  }
+  else if (isButtonPressed(BTN_LONG)) {
+    updateReward(5, REWARD_LONG, Available_Long, "LONG");
+  }
+  else if (isButtonPressed(BTN_BALLPEN)) {
+    updateReward(10, REWARD_BALLPEN, Available_Ballpen, "BALLPEN");
+  }
+  else if (isButtonPressed(BTN_INDEX)) {
+    updateReward(15, REWARD_INDEX, Available_Index, "INDEX");
+  }
+}
+
+// Function to check if a button is pressed with debounce
+bool isButtonPressed(int buttonPin) {
+  if (digitalRead(buttonPin) == LOW) { // Button pressed (active LOW)
+    delay(50); // Debounce delay
+    if (digitalRead(buttonPin) == LOW) { // Confirm it's still pressed
+      return true;
+    }
+  }
+  return false;
+}
+
+// Function to update reward count and store it in EEPROM
+void updateReward(int eepromAddress, int rewardValue, int &availableCount, String rewardName) {
+  availableCount = rewardValue;
+  writeUnsignedIntIntoEEPROM(eepromAddress, availableCount);
+  delay(20);
+  availableCount = readUnsignedIntFromEEPROM(eepromAddress);
+  
+  Serial.print("✅ Reward reset: ");
+  Serial.print(rewardName);
+  Serial.print(" → Available: ");
+  Serial.println(availableCount);
+}

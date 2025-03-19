@@ -1,0 +1,97 @@
+void DISPENSE_SHORT(int val)
+{
+  if (val >= 1)
+  {
+    for (int i = 1 ; i <= val; i++)
+    {
+      SHORT_MOTOR_CW();
+    }
+  }
+}
+
+void DISPENSE_LONG(int val)
+{
+  if (val >= 1)
+  {
+    for (int i = 1 ; i <= val; i++)
+    {
+      LONG_MOTOR_CW();
+    }
+  }
+}
+
+void DISPENSE_BALLPEN(int val)
+{
+  if (val >= 1)
+  {
+    for (int i = 1 ; i <= val; i++)
+    {
+      BALLPEN_MOTOR_CW();
+    }
+  }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
+
+
+
+void SHORT_MOTOR_CW()
+{
+  setServoAngle(Servo_Short_01, 180);
+  setServoAngle(Servo_Short_02, 0);
+  delay(1600);
+
+  Quantity_Short--;
+  SHORT_MOTOR_STOPS();
+
+  Available_Short--;
+  writeUnsignedIntIntoEEPROM(1, Available_Short);
+  delay(20);
+  Available_Short = readUnsignedIntFromEEPROM(1);
+
+  if (SHORT_NOTIF == false && Available_Short == 0)
+  {
+    SMS_NOTIFICATION_SHORT();
+    SHORT_NOTIF = true;
+  }
+
+  if (Quantity_Short == 0)
+  {
+    RESET_VARIABLES();
+  }
+  delay(1500);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+void SHORT_MOTOR_STOPS()
+{
+  setServoAngle(Servo_Short_01, 90);
+  setServoAngle(Servo_Short_02, 90);
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+void writeUnsignedIntIntoEEPROM(int address, unsigned int number)
+{
+  EEPROM.write(address, number);
+}
+
+unsigned int readUnsignedIntFromEEPROM(int address)
+{
+  return EEPROM.read(address);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+void SMS_NOTIFICATION_SHORT()
+{
+  Serial.println("Sending SMS: Short Bottles Out of Stock!");
+}
+

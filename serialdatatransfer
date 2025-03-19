@@ -1,0 +1,35 @@
+void sendData(String card, int value, int status) {
+  Arduino_Serial.print(toString8(card) + toString8(String(value)) + toString8(String(status)) + " \\n");
+  delay(1000);
+}
+
+void sendToNodeMCU() {
+  sendData(User_Card, 0, 1); // Status 1: User verification
+}
+
+void sendDispense() {
+  sendData(User_Card, User_Points, 2); // Status 2: Reward Dispense
+}
+
+void sendBottleInsert() {
+  sendData(User_Card, pulses_bottles, 3); // Status 3: Bottle Inserted
+  delay(1500);
+  
+  if (!Dispense_Display) {
+    Serial.print("page 9");
+    Serial.write(0xff); Serial.write(0xff); Serial.write(0xff);
+    delay(20);
+    pulses_bottles = 0;
+    Dispense_Display = true;
+    setServoAngle(Servo_Entrance, 0); // Close bottle intake
+    delay(20);
+  }
+  resetVariables();
+}
+
+void resetVariables() {
+  User_Card = "";
+  User_Points = 0;
+  pulses_bottles = 0;
+  Dispense_Display = false;
+}
